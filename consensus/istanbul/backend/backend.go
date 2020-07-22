@@ -48,7 +48,6 @@ import (
 	"github.com/ethereum/go-ethereum/metrics"
 	"github.com/ethereum/go-ethereum/p2p/enode"
 	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
 	lru "github.com/hashicorp/golang-lru"
 )
 
@@ -900,7 +899,7 @@ func (sb *Backend) VerifyValidatorConnectionSetSignature(data []byte, sig []byte
 	} else {
 		validators := make([]istanbul.ValidatorData, len(valConnSet))
 		i := 0
-		for address, _ := range valConnSet {
+		for address := range valConnSet {
 			validators[i].Address = address
 			i++
 		}
