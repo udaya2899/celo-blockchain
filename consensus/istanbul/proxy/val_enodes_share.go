@@ -139,7 +139,7 @@ func (p *proxyEngine) handleValEnodesShareMsg(peer consensus.Peer, payload []byt
 		return true, err
 	}
 
-	logger.Trace("Received an Istanbul Validator Enodes Share message", "IstanbulMsg", msg.String(), "ValEnodesShareData", valEnodesShareData.String())
+	logger.Info("Received an Istanbul Validator Enodes Share message", "IstanbulMsg", msg.String(), "ValEnodesShareData", valEnodesShareData.String(), "tag", "xkcd")
 
 	var valEnodeEntries []*istanbul.AddressEntry
 	for _, sharedValidatorEnode := range valEnodesShareData.ValEnodes {
