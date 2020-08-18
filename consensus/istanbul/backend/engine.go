@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/contract_comm/blockchain_parameters"
 	"math/big"
 	"time"
 
@@ -405,10 +406,19 @@ func (sb *Backend) EpochSize() uint64 {
 
 // Returns the size of the lookback window for calculating uptime (in blocks)
 func (sb *Backend) LookbackWindow(header *types.Header) uint64 {
-	if header.Number.Cmp(big.NewInt(500000)) > 0 {
+	blockNumber := new(big.Int).Sub(header.Number, big.NewInt(1))
+	if blockNumber.Cmp(big.NewInt(500000)) > 0 {
 		return sb.config.LookbackWindow
 	} else {
-		return 24
+		st, err := sb.stateAt(header.Hash())
+		if err != nil {
+			// Warn and ret default? 12?
+		}
+		window, err := blockchain_parameters.GetLookbackWindow(header, st)
+		if err != nil {
+			// Warn and ret default? 12?
+		}
+		return window
 	}
 }
 

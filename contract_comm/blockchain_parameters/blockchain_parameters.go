@@ -189,3 +189,27 @@ func GetBlockGasLimit(header *types.Header, state vm.StateDB) (uint64, error) {
 	}
 	return gasLimit.Uint64(), nil
 }
+
+func GetLookbackWindow(header *types.Header, state vm.StateDB) (uint64, error) {
+	var lookbackWindow *big.Int
+	_, err := contract_comm.MakeStaticCall(
+		params.BlockchainParametersRegistryId,
+		blockchainParametersABI,
+		"lookbackWindow",
+		[]interface{}{},
+		&lookbackWindow,
+		params.MaxGasForReadBlockchainParameter,
+		header,
+		state,
+	)
+	if err != nil {
+		if err == errors.ErrRegistryContractNotDeployed {
+			log.Debug("Error obtaining block gas limit", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
+		} else {
+			log.Warn("Error obtaining block gas limit", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
+		}
+		// Default lookbackwindow? 12?
+		return 12, err
+	}
+	return lookbackWindow.Uint64(), nil
+}
