@@ -195,7 +195,7 @@ func GetLookbackWindow(header *types.Header, state vm.StateDB) (uint64, error) {
 	_, err := contract_comm.MakeStaticCall(
 		params.BlockchainParametersRegistryId,
 		blockchainParametersABI,
-		"lookbackWindow",
+		"uptimeLookbackWindow",
 		[]interface{}{},
 		&lookbackWindow,
 		params.MaxGasForReadBlockchainParameter,
@@ -204,9 +204,9 @@ func GetLookbackWindow(header *types.Header, state vm.StateDB) (uint64, error) {
 	)
 	if err != nil {
 		if err == errors.ErrRegistryContractNotDeployed {
-			log.Debug("Error obtaining block gas limit", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
+			log.Debug("Error obtaining lookback window", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
 		} else {
-			log.Warn("Error obtaining block gas limit", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
+			log.Warn("Error obtaining lookback window", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
 		}
 		// Default lookbackwindow? 12?
 		return 12, err
