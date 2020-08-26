@@ -410,7 +410,7 @@ func (sb *Backend) LookbackWindow(header *types.Header) uint64 {
 	if blockNumber.Cmp(big.NewInt(500000)) > 0 {
 		return sb.config.LookbackWindow
 	} else {
-		st, err := sb.stateAt(header.Hash())
+		st, err := sb.stateAt(header.ParentHash)
 		if err != nil {
 			// Warn and ret default? 12?
 		}
