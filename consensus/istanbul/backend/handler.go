@@ -287,7 +287,7 @@ func (sb *Backend) UpdateMetricsForParentOfBlock(child *types.Block) {
 		sb.logger.Warn("Elected but didn't sign block", "number", number-1, "address", sb.ValidatorAddress(), "missed in a row", sb.blocksElectedButNotSignedGauge.Value())
 	}
 
-	parentState , err := sb.stateAt(parentHeader.Hash())
+	parentState, err := sb.stateAt(parentHeader.Hash())
 	if err != nil {
 		sb.logger.Error(err.Error())
 		return
