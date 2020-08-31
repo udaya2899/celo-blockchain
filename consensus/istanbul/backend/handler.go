@@ -287,8 +287,21 @@ func (sb *Backend) UpdateMetricsForParentOfBlock(child *types.Block) {
 		sb.logger.Warn("Elected but didn't sign block", "number", number-1, "address", sb.ValidatorAddress(), "missed in a row", sb.blocksElectedButNotSignedGauge.Value())
 	}
 
+	parentState , err := sb.stateAt(parentHeader.Hash())
+	if err != nil {
+		sb.logger.Error(err.Error())
+		return
+	}
+	// The parents lookback window at the time will be used.
+	// However, the value used for updating the validator scores is the one set at the last epoch block.
+	lookbackWindow, err := sb.LookbackWindow(parentHeader, parentState)
+	if err != nil {
+		sb.logger.Error(err.Error())
+		return
+	}
+
 	// Report downtime events
-	if sb.blocksElectedButNotSignedGauge.Value() >= int64(sb.LookbackWindow(childHeader)) {
+	if sb.blocksElectedButNotSignedGauge.Value() >= int64(lookbackWindow) {
 		sb.blocksDowntimeEventMeter.Mark(1)
 		sb.logger.Error("Elected but getting marked as down", "missed block count", sb.blocksElectedButNotSignedGauge.Value(), "number", number-1, "address", sb.ValidatorAddress())
 	}

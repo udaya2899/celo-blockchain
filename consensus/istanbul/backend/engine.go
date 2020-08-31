@@ -405,21 +405,11 @@ func (sb *Backend) EpochSize() uint64 {
 }
 
 // Returns the size of the lookback window for calculating uptime (in blocks)
-func (sb *Backend) LookbackWindow(header *types.Header) uint64 {
-	blockNumber := new(big.Int).Sub(header.Number, big.NewInt(1))
-	if blockNumber.Cmp(big.NewInt(500000)) > 0 {
-		return sb.config.LookbackWindow
-	} else {
-		st, err := sb.stateAt(header.ParentHash)
-		if err != nil {
-			// Warn and ret default? 12?
-		}
-		window, err := blockchain_parameters.GetLookbackWindow(header, st)
-		if err != nil {
-			// Warn and ret default? 12?
-		}
-		return window
+func (sb *Backend) LookbackWindow(header *types.Header, state *state.StateDB) (uint64, error) {
+	if header.Number.Cmp(big.NewInt(500000)) > 0 {
+		return sb.config.LookbackWindow, nil
 	}
+	return blockchain_parameters.GetLookbackWindow(header, state)
 }
 
 // Finalize runs any post-transaction state modifications (e.g. block rewards)
