@@ -406,7 +406,7 @@ func (sb *Backend) EpochSize() uint64 {
 
 // Returns the size of the lookback window for calculating uptime (in blocks)
 func (sb *Backend) LookbackWindow(header *types.Header, state *state.StateDB) (uint64, error) {
-	if header.Number.Cmp(big.NewInt(500000)) > 0 {
+	if header.Number.Cmp(big.NewInt(500000)) < 0 {
 		return sb.config.LookbackWindow, nil
 	}
 	return blockchain_parameters.GetLookbackWindow(header, state)

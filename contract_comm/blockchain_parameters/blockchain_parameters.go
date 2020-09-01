@@ -206,11 +206,6 @@ func GetBlockGasLimit(header *types.Header, state vm.StateDB) (uint64, error) {
 
 func GetLookbackWindow(header *types.Header, state vm.StateDB) (uint64, error) {
 	var lookbackWindow *big.Int
-	limit, errasdf := GetBlockGasLimit(header, state)
-	if errasdf != nil {
-		log.Error("Error in limit", errasdf)
-	}
-	log.Error("Found limit its", limit)
 	_, err := contract_comm.MakeStaticCall(
 		params.BlockchainParametersRegistryId,
 		blockchainParametersABI,
