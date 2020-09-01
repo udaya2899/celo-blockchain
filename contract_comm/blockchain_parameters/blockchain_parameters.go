@@ -68,6 +68,20 @@ const (
 		"stateMutability": "view",
 		"type": "function"
 	  },
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "uptimeLookbackWindow",
+		"outputs": [
+		  {
+			"name": "",
+			"type": "uint256"
+		  }
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	  },
 	  {
 		"constant": true,
 		"inputs": [],
@@ -213,8 +227,7 @@ func GetLookbackWindow(header *types.Header, state vm.StateDB) (uint64, error) {
 		} else {
 			log.Warn("Error obtaining lookback window", "err", err, "contract", hexutil.Encode(params.BlockchainParametersRegistryId[:]))
 		}
-		// Default lookbackwindow? 12?
-		return 12, err
+		return 0, err
 	}
 	return lookbackWindow.Uint64(), nil
 }
