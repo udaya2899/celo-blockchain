@@ -933,6 +933,14 @@ func (sb *Backend) RemoveProxy(node *enode.Node) error {
 	}
 }
 
+func (sb *Backend) UpdateProxy(externalNode *enode.Node) error {
+	if sb.IsProxiedValidator() {
+		return sb.proxiedValidatorEngine.UpdateProxy(externalNode)
+	} else {
+		return proxy.ErrNodeNotProxiedValidator
+	}
+}
+
 // VerifyPendingBlockValidatorSignature will verify that the message sender is a validator that is responsible
 // for the current pending block (the next block right after the head block).
 func (sb *Backend) VerifyPendingBlockValidatorSignature(data []byte, sig []byte) (common.Address, error) {

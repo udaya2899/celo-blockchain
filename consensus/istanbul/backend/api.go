@@ -160,6 +160,21 @@ func (api *API) RemoveProxy(url string) (bool, error) {
 	return true, nil
 }
 
+// UpdateProxy updates a proxy's configuration with a new external enode
+func (api *API) UpdateProxy(externalUrl string) (bool, error) {
+	if !api.istanbul.config.Proxied {
+		return false, errors.New("Can't update proxy for node that is not configured to be proxied")
+	}
+	externalNode, err := enode.ParseV4(externalUrl)
+	if err != nil {
+		return false, fmt.Errorf("invalid external enode: %v", err)
+	}
+	if err = api.istanbul.UpdateProxy(externalNode); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // Retrieve the Validator Enode Table
 func (api *API) GetValEnodeTable() (map[string]*vet.ValEnodeEntryInfo, error) {
 	return api.istanbul.valEnodeTable.ValEnodeTableInfo()

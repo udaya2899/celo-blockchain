@@ -90,6 +90,9 @@ type ProxiedValidatorEngine interface {
 	// RemoveProxy will remove a proxy from the proxy handler
 	RemoveProxy(node *enode.Node) error
 
+	// UpdateProxy will update the proxy handler with a new external enode for an existing proxy
+	UpdateProxy(externalNode *enode.Node) error
+
 	// RegisterProxyPeer is the callback function that should be called
 	// when a proxy connects to a proxied validator.  This function will
 	// notify the proxy handler that a proxy has connected.

@@ -93,6 +93,7 @@ type proxiedValidatorEngine struct {
 
 	addProxies    chan []*istanbul.ProxyConfig // Used to notify to the thread that new proxies have been added via command line or rpc api
 	removeProxies chan []*enode.Node           // Used to notify to the thread that proxies have been removed via rpc api
+	updateProxies chan []*enode.Node           // Used to notify to the thread that updates to proxies have been given via rpc api
 
 	addProxyPeer    chan consensus.Peer // Used to notify to the thread of newly peered proxies
 	removeProxyPeer chan consensus.Peer // Used to notify to the thread of newly disconnected proxy peers
@@ -125,6 +126,7 @@ func NewProxiedValidatorEngine(backend BackendForProxiedValidatorEngine, config 
 
 		addProxies:      make(chan []*istanbul.ProxyConfig),
 		removeProxies:   make(chan []*enode.Node),
+		updateProxies:   make(chan []*enode.Node),
 		addProxyPeer:    make(chan consensus.Peer, 10),
 		removeProxyPeer: make(chan consensus.Peer, 10),
 
@@ -211,6 +213,20 @@ func (pv *proxiedValidatorEngine) RemoveProxy(node *enode.Node) error {
 
 	select {
 	case pv.removeProxies <- []*enode.Node{node}:
+		return nil
+	case <-pv.quit:
+		return istanbul.ErrStoppedProxiedValidatorEngine
+	}
+}
+
+// UpdateProxy will update a proxy's external enode and inform remote validators as appropriate
+func (pv *proxiedValidatorEngine) UpdateProxy(externalNode *enode.Node) error {
+	if !pv.Running() {
+		return istanbul.ErrStoppedProxiedValidatorEngine
+	}
+
+	select {
+	case pv.updateProxies <- []*enode.Node{externalNode}:
 		return nil
 	case <-pv.quit:
 		return istanbul.ErrStoppedProxiedValidatorEngine
@@ -419,6 +435,28 @@ loop:
 					pv.sendValEnodeShareMsgs(ps)
 				}
 				pv.backend.RemovePeer(proxy.node, p2p.ProxyPurpose)
+			}
+
+		case updateProxyNodes := <-pv.updateProxies:
+			// Got command to update proxy nodes.
+			// Update their external and internal enode as appropriate
+			for _, newExternalNode := range updateProxyNodes {
+				proxyID := newExternalNode.ID()
+				currProxyNode := ps.getProxy(proxyID)
+				if currProxyNode == nil {
+					logger.Warn("Proxy is not in the proxy set", "newExternalNode", newExternalNode, "proxyID", proxyID, "chan", "updateProxies")
+					continue
+				}
+				log.Info("Updating proxy node", "currProxyNode", currProxyNode, "newExternalNode", newExternalNode, "proxyID", proxyID)
+				if newExternalNode.String() != currProxyNode.externalNode.String() {
+					if announceNeeded := ps.updateProxy(newExternalNode); announceNeeded {
+						logger.Info("External enode of proxy with validators has changed.  Sending val enode share messages and updating announce version")
+						pv.backend.UpdateAnnounceVersion()
+						pv.sendValEnodeShareMsgs(ps)
+					}
+				} else {
+					log.Info("Proxy node unchanged", "currProxyNode", currProxyNode, "newExternalNode", newExternalNode, "proxyID", proxyID)
+				}
 			}
 
 		case connectedPeer := <-pv.addProxyPeer:

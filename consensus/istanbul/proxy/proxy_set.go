@@ -87,6 +87,21 @@ func (ps *proxySet) removeProxy(proxyID enode.ID) bool {
 	return valsReassigned
 }
 
+// updateProxy updates a proxy that is already in the proxy set
+// Will return true if the proxy has any validators assigned to it
+func (ps *proxySet) updateProxy(newExternalNode *enode.Node) bool {
+	logger := ps.logger.New("func", "updateProxy")
+	logger.Trace("Updating proxy in the proxy set", "new proxy external node", newExternalNode)
+	proxyID := newExternalNode.ID()
+	if currProxy := ps.proxiesByID[proxyID]; currProxy != nil {
+		currProxy.externalNode = newExternalNode
+		vals := ps.valAssignments.proxyToVals[proxyID]
+		return vals != nil && len(vals) > 0
+	}
+	logger.Warn("Cannot update proxy, since a proxy with that ID does not exist in the proxy set")
+	return false
+}
+
 // setProxyPeer sets the peer for a proxy with enode ID proxyID.
 // Since this proxy is now connected tto the proxied validator, it
 // can now be assigned remote validators.
