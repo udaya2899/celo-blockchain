@@ -132,16 +132,19 @@ func (sb *Backend) distributeEpochRewards(header *types.Header, state *state.Sta
 
 func (sb *Backend) updateValidatorScores(header *types.Header, state *state.StateDB, valSet []istanbul.Validator) ([]*big.Int, error) {
 	epoch := istanbul.GetEpochNumber(header.Number.Uint64(), sb.EpochSize())
+	logger := sb.logger.New("func", "Backend.updateValidatorScores", "blocknum", header.Number.Uint64(), "epoch", epoch, "epochsize", sb.EpochSize())
 
-	// The lookback window value used here will be the one set by governance at the block number of the last epoch block.
-	// This might be a different value than the one used in the metric recollection during the epoch, which might have changed.
+	// header (&state) == lastBlockOfEpoch
+	// sb.LookbackWindow(header, state) => value at the end of epoch
+	// It doesn't matter which was the value at the beginning but how it ends.
+	// Notice that exposed metrics compute based on current block (not last of epoch) so if lookback window changed during the epoch, metric uptime score might differ
 	lookbackWindow, err := sb.LookbackWindow(header, state)
 	if err != nil {
-		sb.logger.Error(err.Error())
+		logger.Error("Error getting lookbackWindow", err.Error())
 		return nil, err
 	}
 
-	logger := sb.logger.New("func", "Backend.updateValidatorScores", "blocknum", header.Number.Uint64(), "epoch", epoch, "epochsize", sb.EpochSize(), "window", lookbackWindow)
+	logger = logger.New("window", lookbackWindow)
 	logger.Trace("Updating validator scores")
 
 	// The denominator is the (last block - first block + 1) of the val score tally window
@@ -159,10 +162,10 @@ func (sb *Backend) updateValidatorScores(header *types.Header, state *state.Stat
 		if i >= len(valSet) {
 			break
 		}
-		val_logger := logger.New("scoreTally", entry.ScoreTally, "denominator", denominator, "index", i, "address", valSet[i].Address())
+		valLogger := logger.New("scoreTally", entry.ScoreTally, "denominator", denominator, "index", i, "address", valSet[i].Address())
 
 		if entry.ScoreTally > denominator {
-			val_logger.Error("ScoreTally exceeds max possible")
+			valLogger.Error("ScoreTally exceeds max possible")
 			uptimes = append(uptimes, params.Fixidity1)
 			continue
 		}
@@ -178,8 +181,8 @@ func (sb *Backend) updateValidatorScores(header *types.Header, state *state.Stat
 	}
 
 	for i, val := range valSet {
-		val_logger := logger.New("uptime", uptimes[i], "address", val.Address())
-		val_logger.Trace("Updating validator score")
+		valLogger := logger.New("uptime", uptimes[i], "address", val.Address())
+		valLogger.Trace("Updating validator score")
 		err := validators.UpdateValidatorScore(header, state, val.Address(), uptimes[i])
 		if err != nil {
 			return nil, err

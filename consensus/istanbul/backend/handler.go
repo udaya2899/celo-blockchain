@@ -202,7 +202,7 @@ func (sb *Backend) NewWork() error {
 	return nil
 }
 
-// Maintain metrics around the *parent* of the supplied block.
+// UpdateMetricsForParentOfBlock maintains metrics around the *parent* of the supplied block.
 // To figure out if this validator signed the parent block:
 // * First check the grandparent's validator set. If not elected, it didn't.
 // * Then, check the parent seal on the supplied (child) block.
